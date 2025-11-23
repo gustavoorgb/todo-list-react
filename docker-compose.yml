@@ -1,0 +1,9 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: ./.docker/Dockerfile
+    container_name: todo-list
+    ports:
+      - "3000:80"
+    restart: unless-stopped
