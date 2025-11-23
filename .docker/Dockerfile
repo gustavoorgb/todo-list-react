@@ -1,27 +1,22 @@
-# Stage 1: Build the Vite project
-FROM node:20-alpine AS builder
+FROM node:20-alpine
 
+# Definir diretório de trabalho
 WORKDIR /app
 
+# Copiar package.json e package-lock.json para instalar dependências
 COPY package.json package-lock.json ./
+
+# Instalar dependências
 RUN npm install
 
+# Copiar todo o código
 COPY . .
-RUN npm run build
 
-# Stage 2: Serve with Nginx
-FROM nginx:alpine
+# Expor a porta do Vite
+EXPOSE 5173
 
-# Remove default Nginx files
-RUN rm -rf /usr/share/nginx/html/*
+# Variável necessária para HMR no WSL2
+ENV CHOKIDAR_USEPOLLING=true
 
-# Copy build output
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy custom Nginx config
-COPY ./.nginx/nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Rodar o servidor de desenvolvimento do Vite
+CMD ["npm", "run", "dev"]

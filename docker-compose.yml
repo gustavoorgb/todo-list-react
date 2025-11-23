@@ -4,6 +4,10 @@ services:
       context: .
       dockerfile: ./.docker/Dockerfile
     container_name: todo-list
+    volumes:
+      - .:/app          # mapeia seu código local para dentro do container
+      - /app/node_modules
     ports:
-      - "3000:80"
-    restart: unless-stopped
+      - "5173:5173"     # porta padrão do Vite
+    environment:
+      - CHOKIDAR_USEPOLLING=true
