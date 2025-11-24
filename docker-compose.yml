@@ -1,13 +1,48 @@
 services:
+  # FRONTEND
   frontend:
     build:
-      context: .
+      context: ./frontend       # pasta do frontend
       dockerfile: ./.docker/Dockerfile
-    container_name: todo-list
+    container_name: todo-list-frontend
     volumes:
-      - .:/app          # mapeia seu código local para dentro do container
+      - ./frontend:/app
       - /app/node_modules
     ports:
-      - "5173:5173"     # porta padrão do Vite
+      - "5173:5173"
     environment:
       - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - php
+
+  # BACKEND
+  php:
+    build:
+      context: ./backend       # pasta do backend
+      dockerfile: ./docker/Dockerfile
+    container_name: todo-list-backend
+    volumes:
+      - ./backend:/var/www/html
+    ports:
+      - "8000:80"
+    environment:
+      APP_ENV: dev
+    depends_on:
+      - db
+
+  # BANCO DE DADOS
+  db:
+    image: mysql:8.0
+    container_name: todo-list-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: todo_list
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3308:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
