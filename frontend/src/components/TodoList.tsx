@@ -44,7 +44,7 @@ function TodoList() {
             </div>
             <ul className="space-y-2">
                 {todos.map(todo => (
-                <TodoItem todo={todo} checkTodo={checkTodo} removeTodo={removeTodo}/>
+                <TodoItem key={todo.id} todo={todo} checkTodo={checkTodo} removeTodo={removeTodo}/>
                 ))}
             </ul>
         </div>
