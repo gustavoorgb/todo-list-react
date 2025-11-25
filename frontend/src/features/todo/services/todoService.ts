@@ -1,20 +1,36 @@
 // src/features/todo/services/todoService.ts
 import { api } from "../../api";
 
-export interface TodoDTO {
+export interface Task {
+  id: number;
   title: string;
+  description: string | null;
+  createdAt: string;
+  isCompleted: boolean;
 }
 
-export async function getTodos() {
-  const res = await api.get("/api/todos");
+export interface TaskDTO {
+  title?: string;
+  description?: string | null; // optional
+  isCompleted?: boolean;
+}
+
+export async function getTasks(): Promise<Task[]> {
+  const res = await api.get("/api/tasks");
   return res.data;
 }
 
-export async function createTodo(data: TodoDTO) {
-  const res = await api.post("/api/todos", data);
+export async function createTask(data: TaskDTO): Promise<{ message: string, task: Task }> {
+  const res = await api.post("/api/task", data);
   return res.data;
 }
 
-export async function deleteTodo(id: number) {
-  await api.delete(`/api/todos/${id}`);
+export async function updateTask(id: number, data: TaskDTO): Promise<{ message: string, task: Task }> {
+  const res = await api.put(`/api/tasks/${id}`, data);
+  return res.data;
+}
+
+export async function deleteTask(id: number): Promise<{ message: string }> {
+  const res = await api.delete(`/api/tasks/${id}`);
+  return res.data;
 }
