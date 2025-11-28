@@ -1,64 +1,70 @@
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { api } from "../../api";
 
-export interface RegisterDTO {
-  name: string;
-  email: string;
-  password: string;
+export interface User { id: number; name: string; email: string; password: string }
+export interface LoginDTO { email: string; password: string }
+export interface RegisterDTO { name: string; email: string; password: string }
+
+export interface AuthContextData {
+  user: User | null;
+  login: (data: LoginDTO) => Promise<void>;
+  logout: () => void;
+  register: (data: RegisterDTO) => Promise<void>;
+  isAuthenticated: boolean;
 }
 
-export interface LoginDTO {
-  email: string;
-  password: string;
-}
-const JWT_TOKEN_KEY = 'jwt_token';
+const JWT_TOKEN_KEY = "jwt_token";
 
-export async function register(data: RegisterDTO) {
-  const response = await api.post("/api/register", data);
-  return response.data;
-}
+// Cria o contexto
+const AuthContext = createContext<AuthContextData | undefined>(undefined);
 
-export async function login(data: LoginDTO) {
-    const response = await api.post("/api/login", data);
-    const token = response.data.token;
-    if(token){
+// Provider
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem(JWT_TOKEN_KEY);
+    if (token) setAuthHeader(token);
+  }, []);
+
+  const login = async (data: LoginDTO) => {
+    const res = await api.post("/api/login", data);
+    const token = res.data.token;
+    if (token) {
       localStorage.setItem(JWT_TOKEN_KEY, token);
-
       setAuthHeader(token);
+      setUser(res.data.user);
     }
+  };
 
-    return response.data;
+  const register = async (data: RegisterDTO) => {
+    await api.post("/api/register", data);
+    await login({ email: data.email, password: data.password });
+  };
 
-}
-// ----------------------------------------------------
-// Funções Auxiliares para Autenticação
-// ----------------------------------------------------
+  const logout = () => {
+    localStorage.removeItem(JWT_TOKEN_KEY);
+    delete api.defaults.headers.common["Authorization"];
+    setUser(null);
+  };
 
-/**
- * Define o cabeçalho de Autorização no Axios para requisições futuras.
- */
-export const setAuthHeader = (token: string) => {
-  api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  const isAuthenticated = !!user;
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, register, isAuthenticated }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-/**
- * Remove o token e limpa o cabeçalho de Autorização.
- */
-export const logout = () => {
-  localStorage.removeItem(JWT_TOKEN_KEY);
-  delete api.defaults.headers.common['Authorization'];
+// Hook customizado
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+  return context;
 };
 
-/**
- * Verifica se o usuário está autenticado.
- */
-export const isAuthenticated = (): boolean => {
-    return !!localStorage.getItem(JWT_TOKEN_KEY);
+// Axios header
+const setAuthHeader = (token: string) => {
+  api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 };
-
-
-// Tenta configurar o cabeçalho de Autorização ao carregar o módulo,
-// caso o token já esteja no localStorage (após um refresh de página)
-const storedToken = localStorage.getItem(JWT_TOKEN_KEY);
-if (storedToken) {
-    setAuthHeader(storedToken);
-}
