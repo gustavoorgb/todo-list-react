@@ -1,8 +1,9 @@
 // src/features/auth/components/RegisterForm.tsx
 import { useState } from "react";
-import { register } from "../services/authService";
+import { useAuth } from "../services/authService";
 
 export default function RegisterForm() {
+  const {register} = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
